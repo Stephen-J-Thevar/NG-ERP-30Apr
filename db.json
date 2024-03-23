@@ -1,0 +1,80 @@
+{
+  "NGSKU": [
+    { "id": "NGSKU000001", "sku": "Photo 1X1", "metric": "PCS", "price": 1 },
+    {
+      "id": "NGSKU000002",
+      "sku": "Photo 2X2",
+      "metric": "PCS",
+      "price": 2
+    },
+    {
+      "id": "NGSKU000003",
+      "sku": "Photo 3X3",
+      "metric": "PCS",
+      "price": 3
+    },
+    {
+      "id": "NGSKU000004",
+      "sku": "Photo 4X4",
+      "metric": "PCS",
+      "price": 4
+    },
+    {
+      "id": "NGSKU000005",
+      "sku": "Photo 5X5",
+      "metric": "PCS",
+      "price": 5
+    },
+    {
+      "id": "NGSKU000006",
+      "sku": "Photo 6X6",
+      "metric": "PCS",
+      "price": 6
+    },
+    {
+      "id": "NGSKU000007",
+      "sku": "Photo 7X7",
+      "metric": "PCS",
+      "price": 7
+    },
+    {
+      "id": "NGSKU000008",
+      "sku": "Photo 8X8",
+      "metric": "PCS",
+      "price": 8
+    },
+    {
+      "id": "NGSKU000009",
+      "sku": "Photo 9X9",
+      "metric": "PCS",
+      "price": 9
+    },
+    {
+      "id": "NGSKU000010",
+      "sku": "Photo 10X10",
+      "metric": "PCS",
+      "price": 10
+    }
+  ],
+  "comments": [
+    { "id": "1", "text": "a comment about post 1", "postId": "1" },
+    { "id": "2", "text": "another comment about post 1", "postId": "1" }
+  ],
+  "NGCUS": [
+    {
+      "id": "NGCUS000001",
+      "name": "John Doe",
+      "email": "dummy1@test.com",
+      "mobile": "1234567890",
+      "address": "Dummy Address 1",
+      "createdAt": "timestamp"
+    },
+    {
+      "id": "NGCUS000002",
+      "name": "Rajesh Kumar",
+      "email": "dummy2@test.com",
+      "mobile": "1234567890",
+      "address": "Dummy Address 2"
+    }
+  ]
+}
