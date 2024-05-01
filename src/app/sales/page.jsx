@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Select from "react-select";
+import SalCus from "@/components/SalCus";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import SalCus from "@/components/SalCus";
+import { useEffect, useState } from "react";
+import Select from "react-select";
 
 //* ---------------COMP---------------------/
 export default function Sales() {
-  //note: Same SKU twice not allowed
   // const initialRow = {
   //   skuId: "",
   //   sku: "",
@@ -18,22 +17,38 @@ export default function Sales() {
 
   //* ---------------ALL STATES---------------------/
   const [rows, setRows] = useState([]);
-  const [total, setTotal] = useState();
+  const [total, setTotal] = useState(0);
   const [balance, setBalance] = useState(() => total);
-  const [advance, setAdvance] = useState();
-
+  const [advance, setAdvance] = useState(0);
+  const [sale, setSale] = useState(() => ({
+    customer: "",
+    items: [],
+    total: total,
+    balance: balance,
+    advance: advance,
+  }));
+  const [call, setCall] = useState(null);
   //* ---------------API CALLS---------------------/
-  async function getOneSku(sku) {
+  async function getOneSku(id) {
     try {
-      const { data } = await axios.get(`http://localhost:3005/NGSKU/${sku}`);
+      const { data } = await axios.post(
+        `http://localhost:3000/api/sales/saleSku`,
+        {
+          id,
+        }
+      );
 
-      data.amount = data.price;
-      data.qty = 1;
+      const saleSku = data.sku[0];
+
+      saleSku.amount = saleSku.price;
+      saleSku.qty = 1;
+
+      // todo : the below row.sku_name should be changed to sku_id
 
       setRows((prev) => {
-        if (prev.some((row) => row.id === data.id)) return prev;
+        if (prev.some((row) => row.sku_name === saleSku.sku_name)) return prev;
 
-        return [...prev, data];
+        return [...prev, saleSku];
       });
       return;
     } catch (err) {
@@ -41,19 +56,43 @@ export default function Sales() {
     }
   }
 
-  async function getSku() {
+  async function catSku(cat) {
     try {
-      const { data } = await axios.get("http://localhost:3005/NGSKU");
-      const sku = data.map((e) => ({ value: e.id, label: e.sku }));
-      return sku;
+      const { data } = await axios.post(
+        "http://localhost:3000/api/sku/catSku",
+        {
+          cat,
+        }
+      );
+
+      return data.listArr;
     } catch (err) {
       console.log(err);
+      return { stat: "Error", message: err.message };
     }
   }
 
+  async function categoryList() {
+    try {
+      const { data } = await axios.get(
+        "http://localhost:3000/api/sku/category"
+      );
+
+      return data.cat;
+    } catch (err) {
+      console.log(err);
+      return { stat: "Error", message: err.message };
+    }
+  }
+
+  const { data: categoryArr } = useQuery({
+    queryKey: ["category"],
+    queryFn: categoryList,
+  });
+
   const { data: skuArr } = useQuery({
-    queryKey: ["sku"],
-    queryFn: getSku,
+    queryKey: ["catSkuList", call],
+    queryFn: () => catSku(call),
     initialData: [],
   });
 
@@ -72,6 +111,8 @@ export default function Sales() {
     if (e.target.value === "") return;
 
     const id = e.target.name;
+    console.log(e.target);
+
     const qty = +e.target.value;
 
     rows.forEach((row) => {
@@ -102,6 +143,31 @@ export default function Sales() {
     getOneSku(e.value);
   }
 
+  async function hSave() {
+    const sale = {
+      sales_order: "SO-001",
+      customer_id: "id",
+      customer_name: "Stephen",
+      items: rows,
+      total: total,
+      balance: balance,
+      advance: advance,
+    };
+
+    const { data } = await axios.post("http://localhost:3000/api/sales", {
+      data: sale,
+    });
+
+    // todo : the drop down options should be cleared after selection.
+
+    setRows(() => []);
+    setTotal(() => 0);
+    setBalance(() => 0);
+    setAdvance(() => 0);
+    setSale(() => sale);
+  }
+
+  //**************************EFFECTS*********************************/
   useEffect(() => {
     setTotal(() =>
       rows.reduce((val, arr) => {
@@ -118,7 +184,7 @@ export default function Sales() {
       {/* //* ---------------XXXXX---------------------/ */}
       <div className="flex gap-2">
         <div className="w-80">
-          <Select options={skuArr} onChange={(e) => hSelSku(e)} />
+          <Select options={categoryArr} onChange={(e) => setCall(e.value)} />
         </div>
         <div className="w-80">
           <Select options={skuArr} onChange={(e) => hSelSku(e)} />
@@ -142,9 +208,9 @@ export default function Sales() {
             {rows.length > 0 &&
               rows.map((row, index) => (
                 <tr key={index}>
-                  <td className="text-center">{row.id}</td>
+                  <td className="text-center">{row.sku_id}</td>
 
-                  <td className="text-center">{row.sku}</td>
+                  <td className="text-center">{row.sku_name}</td>
 
                   <td className="text-center">{row.metric}</td>
 
@@ -156,7 +222,7 @@ export default function Sales() {
                       id={row.id}
                       min={1}
                       value={row.qty}
-                      onChange={hQty}
+                      onChange={() => hQty(row)}
                     />
                   </td>
 
@@ -190,7 +256,13 @@ export default function Sales() {
 
           <div className="flex gap-4">
             <h4>Advance</h4>
-            <input type="number" min={0} onChange={hAdvance} value={advance} />
+            <input
+              type="number"
+              min={0}
+              onChange={hAdvance}
+              disabled={total === 0}
+              value={advance}
+            />
           </div>
 
           <div className="flex gap-4">
@@ -198,24 +270,20 @@ export default function Sales() {
             <p>{balance}</p>
           </div>
         </div>
-
         <div>
-          <div className="flex gap-4">
-            <h4>Total</h4>
-            <p>{total}</p>
-          </div>
-
-          <div className="flex gap-4">
-            <h4>Advance</h4>
-            <input type="number" min={0} onChange={hAdvance} value={advance} />
-          </div>
-
-          <div className="flex gap-4">
-            <h4>Balance</h4>
-            <p>{balance}</p>
-          </div>
+          <button
+            disabled={total === 0}
+            onClick={hSave}
+            className={`p-2 text-white  ${
+              total === 0 ? "bg-gray-500" : "bg-blue-500"
+            }`}
+          >
+            Save
+          </button>
         </div>
       </section>
     </main>
   );
 }
+
+// todo : save button should be disabled if no total amount and show notification in case of no total amount.

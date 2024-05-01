@@ -1,0 +1,76 @@
+
+  // note : auto increment for all id's. make a cron which will trigger on every jan1 and resets the year and leading number and have a separate collection for keeping track of this.
+
+
+  pages layout
+  *sales-
+    -New sales
+    -final payment (this is the final payment time)
+
+  *cutomer-
+    -New Customer
+    -Edit Customer
+
+  *Sku-
+    -New Sku
+    -Edit Sku
+
+
+  schemas
+  *sales-
+    -sales_order
+    -customer_id
+    -customer_name
+    -items->[{
+        -sku_id
+        -sku_name
+        -metric
+        -price
+        -amount
+        -qty
+    }]
+    -total  
+    -balance
+    -advance
+    -discount
+    
+  *customer-
+    -customer_id
+    -customer_name
+    -address
+    -phone
+    -email
+
+  *sku Master- (Master and inventory are different. Master is the list of all sku's and inventory is the stock of each sku. Inventory will be updated on each sales. Master will be updated on each new sku.)
+    -sku_id
+    -sku_name
+    -metric
+    -category
+    -brand
+
+*GRN- (will see what all needs to be added here. NOW just Dummy)
+      -sku_id
+      -qty
+      -price
+      -total
+      -date
+      -invoice_no
+      -vendor_id
+      -vendor_name
+      -vendor_address
+      -vendor_phone
+      -vendor_email
+
+NOTE-[GRN record has to be saved in a separate collection.]
+
+
+DOUBTS-
+1) do the sales need multiple select sku's or just one sku at a time?
+
+
+sku-
+    F-Master- (this is a record of all the sku's)
+    F-GRN- (this is a record of all the GRN's. This should not be manupulated.)
+    F-Stock- (this is a record of all the stock available. This will be updated on each sales.)
+
+
