@@ -1,9 +1,12 @@
 "use client";
 
+import { getId, incrementId } from "@/lib/fns/iFns";
 import { axiosIn } from "@/lib/query-provider";
 import { useQuery } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import CreateableSelect from "react-select/creatable";
+import { Notification, useToaster } from "rsuite";
+import "rsuite/dist/rsuite-no-reset.min.css";
 
 const metricArr = [
   { value: "PCS", label: "PCS" },
@@ -19,38 +22,23 @@ const categoryArr = [
   { value: "catD", label: "catD" },
 ];
 
-async function getSkuId() {
-  try {
-    const { data } = await axiosIn.get("/latestId?name=sku");
-    return data.latestId.id;
-  } catch (err) {
-    return { error: "error", message: err.message };
-  }
+function toast(msg, type) {
+  const message = (
+    <Notification type={type} header={type} closable>
+      <p>{msg}</p>
+    </Notification>
+  );
+
+  return message;
 }
 // todo: name should not be repeated do check the db for duplication
 
-function incrementId(id) {
-  try {
-    if (!id) throw new Error("id is not defined");
-
-    const id_arr = id.split("-");
-    const num = id_arr[2];
-    const current_year = new Date().getFullYear().toString().slice(2);
-
-    const newId = (parseInt(num) + 1).toString().padStart(6, "0");
-
-    const new_sku_id = `SKU-${current_year}-${newId}`;
-
-    return new_sku_id;
-  } catch (err) {
-    return { error: "error", message: err.message };
-  }
-}
-
 //**************************COMP*********************************/
 export default function Sku() {
-  const priceRef = useRef();
   const skuNameRef = useRef();
+  const toaster = useToaster();
+  // const router = useRouter();
+
   const [metric, setMetric] = useState();
   const [category, setCategory] = useState();
 
@@ -60,7 +48,7 @@ export default function Sku() {
     isError: idE,
   } = useQuery({
     queryKey: ["skuId"],
-    queryFn: getSkuId,
+    queryFn: () => getId("sku"),
   });
 
   //**************************HANDLERS*********************************/
@@ -69,12 +57,7 @@ export default function Sku() {
     e.preventDefault();
 
     try {
-      if (
-        !skuNameRef.current.value ||
-        !metric ||
-        !category ||
-        !priceRef.current.value
-      )
+      if (!skuNameRef.current.value || !metric || !category)
         throw new Error("All fields are required");
 
       const sku = {
@@ -84,13 +67,7 @@ export default function Sku() {
         category: category,
       };
 
-      // console.log(sku);
-      // const { data } = await axios.post(
-      //   "http://localhost:3000/api/sku/master",
-      //   {
-      //     data: sku,
-      //   }
-      // );
+      // todo : I have to make sure, latest Id and the other respective collection like sales, customer etc ids are in sync
 
       const { data } = await axiosIn.post("/sku/master", sku);
 
@@ -99,16 +76,16 @@ export default function Sku() {
         id: sku.sku_id,
       });
 
-      console.log(putId.latestId.id);
+      toaster.push(toast(data.message, "success"), { placement: "topCenter" });
 
-      console.log(data.message);
+      window.location.reload();
+      // router.push("/sku");
 
-      skuNameRef.current.value = "";
-      setMetric(() => "");
-      setCategory(() => "");
-      priceRef.current.value = "";
+      // skuNameRef.current.value = "";
+      // setMetric(() => "");
+      // setCategory(() => "");
     } catch (err) {
-      console.log(err); //! todo: remove log later
+      toaster.push(toast(err.message), { placement: "topCenter" });
       // todo : give some notification
     }
   }
@@ -127,12 +104,16 @@ export default function Sku() {
           </div>
 
           <div>
-            <label htmlFor="skuName">SKU NAME :</label>
+            <label htmlFor="skuName">
+              SKU NAME <sup>*</sup> :
+            </label>
             <input ref={skuNameRef} type="text" id="skuName" />
           </div>
 
           <div>
-            <label>Category :</label>
+            <label>
+              Category <sup>*</sup> :
+            </label>
             {/* <Select
               options={categoryArr}
               onChange={(e) => console.log(e.value)}
@@ -146,7 +127,9 @@ export default function Sku() {
           </div>
 
           <div>
-            <label>Metric</label>
+            <label>
+              Metric <sup>*</sup>
+            </label>
             {/* <Select options={metricArr} onChange={(e) => setMetric(e.value)} /> */}
             <CreateableSelect
               isClearable

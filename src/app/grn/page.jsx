@@ -1,63 +1,47 @@
 "use client";
-
-import SalCus from "@/components/SalCus";
-import { categoryList, catSku } from "@/lib/fns/iFns";
-import { axiosIn } from "@/lib/query-provider";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Select from "react-select";
+import { useQuery } from "@tanstack/react-query";
+import { categoryList, catSku, getId, incrementId } from "@/lib/fns/iFns";
+import { axiosIn } from "@/lib/query-provider";
 
 //* ---------------COMP---------------------/
-export default function Sales() {
-  // const initialRow = {
-  //   skuId: "",
-  //   sku: "",
-  //   metric: "PCS",
-  //   unitPrice: 10,
-  // };
-
-  //* ---------------ALL STATES---------------------/
+export default function GRN() {
   const [rows, setRows] = useState([]);
   const [total, setTotal] = useState(0);
-  const [balance, setBalance] = useState(() => total);
-  const [advance, setAdvance] = useState(0);
-  const [sale, setSale] = useState(() => ({
-    customer: "",
+  const [grn, setGrn] = useState(() => ({
     items: [],
     total: total,
-    balance: balance,
-    advance: advance,
   }));
   const [call, setCall] = useState(null);
-  //* ---------------API CALLS---------------------/
-  async function getOneSku(obj) {
-    // !!!!!! ##### VERY IMP
-    // pending :  sku should come inventory table
+
+  //* ---------------API CALLS USEQUERIES---------------------/
+  const {
+    data: grnId,
+    isFetching: idL,
+    isError: idE,
+  } = useQuery({
+    queryKey: ["grnId"],
+    queryFn: () => getId("grn"),
+  });
+
+  async function getSku(sku_id) {
     try {
-      const { data } = await axiosIn.post(`/inventory`, {
-        sku_id: obj.value,
-        mrp: obj.mrp,
-      });
+      const { data } = await axiosIn.get(`/sku/master?sku_id=${sku_id}`);
 
-      data.total = data.mrp;
-      data.sale_qty = 1;
-
-      // todo : the below row.sku_name should be changed to sku_id
+      data.qty = 1;
+      data.mrp = 0;
+      data.total = 0;
 
       setRows((prev) => {
-        if (
-          prev.some(
-            (row) => row.sku_name === data.sku_name && row.mrp === data.mrp
-          )
-        )
-          return prev;
+        if (prev.some((row) => row.sku_id === data.sku_id)) return prev;
 
         return [...prev, data];
       });
+
       return;
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -74,24 +58,24 @@ export default function Sales() {
   });
 
   //* ---------------HANDLERS---------------------/
-  function remRow(e, obj) {
-    const id = e.target.id;
+  function remRow(e, sku) {
+    // if (rows.length > 1) {
+    //   setRows(() => rows.slice(0, -1));
+    // }
 
-    const rem = rows.filter(
-      (row) => row.sku_id !== obj.sku_id || row.mrp !== obj.mrp
-    );
+    const rem = rows.filter((row) => row.sku_id !== sku.sku_id);
 
     setRows(() => rem);
   }
 
-  function hQty(e, obj) {
-    if (e.target.value === "") return;
+  function hQty(e, sku) {
+    // todo : handle if no value is entered
 
     const qty = +e.target.value;
 
     rows.forEach((row) => {
-      if (row.sku_id === obj.sku_id && row.mrp === obj.mrp) {
-        row.sale_qty = qty;
+      if (row.sku_id === sku.sku_id) {
+        row.qty = qty;
         row.total = row.mrp * qty;
       }
     });
@@ -100,45 +84,53 @@ export default function Sales() {
 
     setTotal(() =>
       rows.reduce((val, arr) => {
-        val += arr.amount;
+        val += arr.total;
         return val;
       }, 0)
     );
-
-    setBalance(() => 0);
   }
 
-  function hAdvance(e) {
-    setAdvance(+e.target.value);
-    setBalance(total - +e.target.value);
+  function hMrp(e, sku) {
+    try {
+      const mrp = +e.target.value;
+
+      rows.forEach((row) => {
+        if (row.sku_id === sku.sku_id) {
+          row.mrp = mrp;
+          row.total = row.qty * mrp;
+        }
+      });
+
+      setRows(() => [...rows]);
+
+      setTotal(() =>
+        rows.reduce((val, arr) => {
+          val += arr.total;
+          return val;
+        }, 0)
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   function hSelSku(e) {
-    getOneSku(e);
+    getSku(e.value);
   }
 
   async function hSave() {
-    const sale = {
-      sales_order: "SO-001",
-      customer_id: "id",
-      customer_name: "Stephen",
+    const grn = {
+      grn_id: incrementId(grnId),
       items: rows,
       total: total,
-      balance: balance,
-      advance: advance,
     };
 
-    const { data } = await axios.post("http://localhost:3000/api/sales", {
-      data: sale,
-    });
+    const { data } = await axiosIn.post("/grn", grn);
 
-    // todo : the drop down options should be cleared after selection.
+    const { data: inventory } = await axiosIn.put("/inventory", rows);
 
     setRows(() => []);
     setTotal(() => 0);
-    setBalance(() => 0);
-    setAdvance(() => 0);
-    setSale(() => sale);
   }
 
   //**************************EFFECTS*********************************/
@@ -154,7 +146,6 @@ export default function Sales() {
   //* ---------------JSX---------------------/
   return (
     <main className="flex flex-col gap-2 p-2">
-      <SalCus />
       {/* //* ---------------XXXXX---------------------/ */}
       <div className="flex gap-2">
         <div className="w-80">
@@ -174,10 +165,9 @@ export default function Sales() {
               <th>Product</th>
               <th>Category</th>
               <th>Metric</th>
-              <th>Sale Qty</th>
-              <th>Unit Price</th>
+              <th>Quantity</th>
+              <th>MRP</th>
               <th>Total</th>
-              <th>Available Qty</th>
             </tr>
           </thead>
 
@@ -200,17 +190,24 @@ export default function Sales() {
                       name={row.sku_id}
                       id={row.sku_id}
                       min={1}
-                      max={row.qty}
-                      value={row.sale_qty}
+                      // value={row.qty}
                       onChange={(e) => hQty(e, row)}
                     />
                   </td>
 
-                  <td className="text-center">{row.mrp}</td>
+                  <td className="text-center">
+                    <input
+                      className="text-center"
+                      type="number"
+                      name={row.sku_id}
+                      id={row.sku_id}
+                      min={1}
+                      // value={row.mrp}
+                      onChange={(e) => hMrp(e, row)}
+                    />
+                  </td>
 
                   <td className="text-center">{row.total}</td>
-
-                  <td className="text-center">{row.qty}</td>
 
                   <td className="text-center">
                     <div className="flex gap-2">
@@ -218,7 +215,7 @@ export default function Sales() {
                         className="font-extrabold"
                         onClick={(e) => remRow(e, row)}
                         id={row.sku_id}
-                        name={row.sku_name}
+                        name={row.sku_id}
                       >
                         -
                       </button>
@@ -229,29 +226,15 @@ export default function Sales() {
           </tbody>
         </table>
       </section>
+
       <section className="flex items-end justify-end bg-white">
         <div>
           <div className="flex gap-4">
             <h4>Total</h4>
             <p>{total}</p>
           </div>
-
-          <div className="flex gap-4">
-            <h4>Advance</h4>
-            <input
-              type="number"
-              min={0}
-              onChange={hAdvance}
-              disabled={total === 0}
-              value={advance}
-            />
-          </div>
-
-          <div className="flex gap-4">
-            <h4>Balance</h4>
-            <p>{balance}</p>
-          </div>
         </div>
+
         <div>
           <button
             disabled={total === 0}
@@ -267,5 +250,4 @@ export default function Sales() {
     </main>
   );
 }
-
-// todo : save button should be disabled if no total amount and show notification in case of no total amount.
+// todo : make sure it cannot be submitted when total, qty, price is 0

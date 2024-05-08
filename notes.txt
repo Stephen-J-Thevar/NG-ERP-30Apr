@@ -62,6 +62,8 @@
       -vendor_email
 
 NOTE-[GRN record has to be saved in a separate collection.]
+NOTE-[all inventory should go under inventory collection.]
+
 
 
 DOUBTS-
@@ -74,3 +76,10 @@ sku-
     F-Stock- (this is a record of all the stock available. This will be updated on each sales.)
 
 
+
+todo : NOTES REALLY IMPORTANT
+1) Inventory should on inventory collection, not GRN collection.
+
+2)Inventory and GRN are two different things. while GRN there should be a record of GRN and update the inventory. Inventory should be updated on each sales as well.
+
+3)Inventory might have same products with different mrps, batch no, etc. So, on sale I need to show the user the list of all the products with different mrps, batch no, etc. and user can select the product he wants to sell.

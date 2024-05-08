@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { Sku } from "@/lib/db";
+import { Inventory } from "@/lib/db";
 
 export async function POST(req) {
   try {
     const body = await req.json();
 
-    const list = await Sku.find({ category: body.cat });
+    const list = await Inventory.find({ category: body.cat });
 
     const listArr = list.map((e) => ({
       value: e.sku_id,
       label: e.sku_name,
+      mrp: e.mrp,
     }));
 
     return NextResponse.json({ listArr }, { status: 200 });

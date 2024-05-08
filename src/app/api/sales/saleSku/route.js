@@ -4,7 +4,6 @@ import { Sku } from "@/lib/db";
 export async function POST(req) {
   try {
     const body = await req.json();
-    console.log(body);
 
     const sku = await Sku.find({ _id: body.id });
 

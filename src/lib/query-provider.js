@@ -5,8 +5,19 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import axios from "axios";
 import { useState } from "react";
 
+//* ---------------COMP---------------------/
 export default function Provider({ children }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            refetchOnWindowFocus: false,
+          },
+        },
+      })
+  );
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}
@@ -15,6 +26,7 @@ export default function Provider({ children }) {
   );
 }
 
+//* ---------------CONSTS---------------------/
 export const axiosIn = axios.create({
   baseURL: "http://localhost:3000/api",
 });

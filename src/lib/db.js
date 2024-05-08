@@ -118,7 +118,7 @@ const skuSchema = new Schema(
 const grnSchema = new Schema(
   {
     grn_id: String,
-    grn_date: Date,
+    // grn_date: Date,
     items: [
       {
         sku_id: String,
@@ -157,6 +157,24 @@ const latestIdSchema = new Schema(
   }
 );
 
+const inventorySchema = new Schema(
+  {
+    sku_id: String,
+    sku_name: String,
+    category: String,
+    metric: String,
+    qty: Number,
+    mrp: Number,
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
 const Customer =
   mongoose.models.customers || mongoose.model("customers", customerSchema);
 
@@ -170,4 +188,9 @@ const Grn = mongoose.models.grns || mongoose.model("grns", grnSchema);
 const LatestId =
   mongoose.models.latest_ids || mongoose.model("latest_ids", latestIdSchema);
 
-export { Customer, Sales, Sku, Grn, LatestId };
+const Inventory =
+  mongoose.models.inventories || mongoose.model("inventories", inventorySchema);
+
+export { Customer, Sales, Sku, Grn, LatestId, Inventory };
+
+// todo :separate all the schemas later
