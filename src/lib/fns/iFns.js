@@ -54,3 +54,28 @@ export async function categoryList() {
     return { stat: "Error", message: err.message };
   }
 }
+//* ---------------XXXX---------------------/
+export async function skuCategoryList() {
+  try {
+    const { data } = await axiosIn.get("/sku/category");
+
+    return data.cat;
+  } catch (err) {
+    console.log(err);
+    return { stat: "Error", message: err.message };
+  }
+}
+//* ---------------XXXX---------------------/
+export async function skuCatSku(cat) {
+  console.log(cat);
+  try {
+    const { data } = await axiosIn.post("/sku/catSku", {
+      cat,
+    });
+
+    return data.listArr;
+  } catch (err) {
+    console.log(err);
+    return { stat: "Error", message: err.message };
+  }
+}

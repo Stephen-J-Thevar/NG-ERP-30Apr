@@ -83,3 +83,9 @@ todo : NOTES REALLY IMPORTANT
 2)Inventory and GRN are two different things. while GRN there should be a record of GRN and update the inventory. Inventory should be updated on each sales as well.
 
 3)Inventory might have same products with different mrps, batch no, etc. So, on sale I need to show the user the list of all the products with different mrps, batch no, etc. and user can select the product he wants to sell.
+
+4) edit delete sku
+
+5) Damage page requiered for updating all the damaged products.
+
+6) grn should happen in meters and sales happens in inches. according the inventory should be updated.

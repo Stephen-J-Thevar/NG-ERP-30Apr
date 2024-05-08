@@ -2,7 +2,15 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import { useQuery } from "@tanstack/react-query";
-import { categoryList, catSku, getId, incrementId } from "@/lib/fns/iFns";
+import {
+  categoryList,
+  catSku,
+  getId,
+  incrementId,
+  skuCategoryList,
+  skuCatSku,
+  skuCatsku,
+} from "@/lib/fns/iFns";
 import { axiosIn } from "@/lib/query-provider";
 
 //* ---------------COMP---------------------/
@@ -14,6 +22,7 @@ export default function GRN() {
     total: total,
   }));
   const [call, setCall] = useState(null);
+  console.log(call);
 
   //* ---------------API CALLS USEQUERIES---------------------/
   const {
@@ -47,15 +56,18 @@ export default function GRN() {
 
   //* ---------------USE QUERIES---------------------/
   const { data: categoryArr } = useQuery({
-    queryKey: ["category"],
-    queryFn: categoryList,
+    queryKey: ["skuCategory"],
+    queryFn: skuCategoryList,
   });
 
+  console.log(call);
+  console.log(categoryArr);
   const { data: skuArr } = useQuery({
-    queryKey: ["catSkuList", call],
-    queryFn: () => catSku(call),
+    queryKey: ["skuCatSkuList", call],
+    queryFn: () => skuCatSku(call),
     initialData: [],
   });
+  console.log(skuArr);
 
   //* ---------------HANDLERS---------------------/
   function remRow(e, sku) {

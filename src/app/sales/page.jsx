@@ -5,8 +5,17 @@ import { categoryList, catSku } from "@/lib/fns/iFns";
 import { axiosIn } from "@/lib/query-provider";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import { set } from "mongoose";
 import { useEffect, useState } from "react";
 import Select from "react-select";
+//* ---------------XXXX---------------------/
+
+function calTotal(rows) {
+  return rows.reduce((val, arr) => {
+    val += arr.total;
+    return val;
+  }, 0);
+}
 
 //* ---------------COMP---------------------/
 export default function Sales() {
@@ -32,8 +41,6 @@ export default function Sales() {
   const [call, setCall] = useState(null);
   //* ---------------API CALLS---------------------/
   async function getOneSku(obj) {
-    // !!!!!! ##### VERY IMP
-    // pending :  sku should come inventory table
     try {
       const { data } = await axiosIn.post(`/inventory`, {
         sku_id: obj.value,
@@ -47,9 +54,7 @@ export default function Sales() {
 
       setRows((prev) => {
         if (
-          prev.some(
-            (row) => row.sku_name === data.sku_name && row.mrp === data.mrp
-          )
+          prev.some((row) => row.sku_id === data.sku_id && row.mrp === data.mrp)
         )
           return prev;
 
@@ -75,8 +80,6 @@ export default function Sales() {
 
   //* ---------------HANDLERS---------------------/
   function remRow(e, obj) {
-    const id = e.target.id;
-
     const rem = rows.filter(
       (row) => row.sku_id !== obj.sku_id || row.mrp !== obj.mrp
     );
@@ -91,6 +94,11 @@ export default function Sales() {
 
     rows.forEach((row) => {
       if (row.sku_id === obj.sku_id && row.mrp === obj.mrp) {
+        if (qty > row.qty) {
+          row.sale_qty = row.qty;
+          row.total = row.mrp * row.qty;
+          return;
+        }
         row.sale_qty = qty;
         row.total = row.mrp * qty;
       }
@@ -98,19 +106,11 @@ export default function Sales() {
 
     setRows(() => [...rows]);
 
-    setTotal(() =>
-      rows.reduce((val, arr) => {
-        val += arr.amount;
-        return val;
-      }, 0)
-    );
-
-    setBalance(() => 0);
+    setTotal(() => calTotal(rows));
   }
 
   function hAdvance(e) {
-    setAdvance(+e.target.value);
-    setBalance(total - +e.target.value);
+    setAdvance(() => +e.target.value);
   }
 
   function hSelSku(e) {
@@ -143,13 +143,18 @@ export default function Sales() {
 
   //**************************EFFECTS*********************************/
   useEffect(() => {
-    setTotal(() =>
-      rows.reduce((val, arr) => {
-        val += arr.amount;
-        return val;
-      }, 0)
-    );
+    setTotal(() => calTotal(rows));
+
+    if (rows.length === 0) {
+      setBalance(() => 0);
+      setAdvance(() => 0);
+    }
   }, [rows.length]);
+
+  useEffect(() => {
+    if (total < advance) setAdvance(() => total);
+    setBalance(() => total - advance);
+  }, [total, advance]);
 
   //* ---------------JSX---------------------/
   return (
@@ -195,7 +200,7 @@ export default function Sales() {
 
                   <td className="text-center">
                     <input
-                      className="text-center"
+                      className="w-full text-center"
                       type="number"
                       name={row.sku_id}
                       id={row.sku_id}
@@ -241,6 +246,7 @@ export default function Sales() {
             <input
               type="number"
               min={0}
+              max={total}
               onChange={hAdvance}
               disabled={total === 0}
               value={advance}
